@@ -3,16 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-  <title>Flappy Bird — Mobile & Desktop Compatible</title>
+  <title>Flappy Bird — Mobile & Desktop Friendly</title>
   <style>
     html,body{height:100%;margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;overflow:hidden;touch-action:manipulation;}
     #gameWrap{display:flex;align-items:center;justify-content:center;height:100%;background:#000;}
     canvas{border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.25);touch-action:none;}
     .ui{position:fixed;left:16px;top:16px;color:#fff;text-shadow:1px 1px 3px #000;font-size:20px;}
     .hint{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;background:rgba(0,0,0,0.5);color:white;padding:8px 12px;border-radius:8px;font-weight:600;text-align:center;width:90%;max-width:400px;}
+    .reminder{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.85);color:#000;font-weight:700;padding:8px 16px;border-radius:10px;font-size:15px;animation:fadeOut 6s forwards;box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+    @keyframes fadeOut{0%{opacity:1;}80%{opacity:1;}100%{opacity:0;visibility:hidden;}}
   </style>
 </head>
 <body>
+  <div class="reminder">🔊 Tip: For more fun, turn on your volume!</div>
   <div id="gameWrap">
     <canvas id="c" width="420" height="640"></canvas>
   </div>
@@ -52,10 +55,10 @@
   gameOverImg.src = 'gameover.png'; // 🖼️ Replace with your game over image
 
   const pipeTopImg = new Image();
-  pipeTopImg.src = 'pipe-top.png'; // 🟩 Replace with your top pipe
+  pipeTopImg.src = 'pipe-top.png';
 
   const pipeBottomImg = new Image();
-  pipeBottomImg.src = 'pipe-bottom.png'; // 🟩 Replace with your bottom pipe
+  pipeBottomImg.src = 'pipe-bottom.png';
 
   const pipeGap = 150, pipeWidth = 62, pipeSpeed = 2.6;
 
@@ -138,7 +141,7 @@
     ctx.clearRect(0,0,W,H);
     drawBackground(); drawPipes(); drawBird(); drawScore();
     if(gameOver){
-      const imgW = 280, imgH = 120;
+      const imgW = 340, imgH = 340; // Changed game over image dimensions
       const x = (W - imgW)/2, y = (H - imgH)/2;
       if(gameOverImg.complete){
         ctx.drawImage(gameOverImg, x, y, imgW, imgH);
@@ -149,7 +152,7 @@
         ctx.fillText('Game Over', W/2, H/2);
       }
       ctx.font='18px system-ui';
-      ctx.fillText('Press R or tap with two fingers to restart', W/2, H/2 + 100);
+      ctx.fillText('Press R or tap with two fingers to restart', W/2, H/2 + 120);
     }
   }
 
@@ -187,7 +190,6 @@
   });
 
   // 📱 Touch controls for mobile
-  let touchStartTime = 0;
   canvas.addEventListener('touchstart', (e)=>{
     e.preventDefault();
     if(e.touches.length === 1 && !gameOver) {
@@ -205,4 +207,4 @@
   requestAnimationFrame(update);
   </script>
 </body>
-</html>     
+</html>
