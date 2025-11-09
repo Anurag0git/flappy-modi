@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+  <title>Flappy Bird — Mobile & Desktop Compatible</title>
+  <style>
+    html,body{height:100%;margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;overflow:hidden;touch-action:manipulation;}
+    #gameWrap{display:flex;align-items:center;justify-content:center;height:100%;background:#000;}
+    canvas{border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.25);touch-action:none;}
+    .ui{position:fixed;left:16px;top:16px;color:#fff;text-shadow:1px 1px 3px #000;font-size:20px;}
+    .hint{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;background:rgba(0,0,0,0.5);color:white;padding:8px 12px;border-radius:8px;font-weight:600;text-align:center;width:90%;max-width:400px;}
+  </style>
+</head>
+<body>
+  <div id="gameWrap">
+    <canvas id="c" width="420" height="640"></canvas>
+  </div>
+  <div class="ui">Score: <span id="score">0</span></div>
+  <div class="hint">Tap or press Space to flap • Tap with two fingers or press R to restart after game over</div>
+
+  <audio id="bgMusic" loop>
+    <source src="background.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="endSound">
+    <source src="gameover.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const bgMusic = document.getElementById('bgMusic');
+  const endSound = document.getElementById('endSound');
+  const W = canvas.width, H = canvas.height;
+
+  let frames = 0, pipes = [], score = 0, gameOver = false;
+  const gravity = 0.45;
+
+  const bird = {
+    x: 80, y: H/2, r: 14,
+    vy: 0,
+    jumpStrength: -8,
+    rotation: 0,
+    img: new Image()
+  };
+  bird.img.src = 'bird.png'; // 🐤 Replace with your bird image
+
+  const bgImg = new Image();
+  bgImg.src = 'background.png'; // 🌄 Replace with your background
+
+  const gameOverImg = new Image();
+  gameOverImg.src = 'gameover.png'; // 🖼️ Replace with your game over image
+
+  const pipeTopImg = new Image();
+  pipeTopImg.src = 'pipe-top.png'; // 🟩 Replace with your top pipe
+
+  const pipeBottomImg = new Image();
+  pipeBottomImg.src = 'pipe-bottom.png'; // 🟩 Replace with your bottom pipe
+
+  const pipeGap = 150, pipeWidth = 62, pipeSpeed = 2.6;
+
+  function spawnPipe(){
+    const minTop = 60, maxTop = H - 200;
+    const top = Math.floor(minTop + Math.random()*(maxTop-minTop));
+    pipes.push({x: W + 20, top: top, passed:false});
+  }
+
+  function reset(){
+    frames = 0; pipes = []; score = 0; gameOver = false;
+    bird.y = H/2; bird.vy=0; bird.rotation=0;
+    bgMusic.currentTime = 0;
+    bgMusic.play().catch(()=>{});
+  }
+
+  function checkCollision(){
+    if(bird.y - bird.r <= 0 || bird.y + bird.r >= H - 80) return true;
+    for(const p of pipes){
+      const rects = [
+        {x:p.x, y:0, w:pipeWidth, h:p.top},
+        {x:p.x, y:p.top + pipeGap, w:pipeWidth, h:H - (p.top + pipeGap) - 80}
+      ];
+      for(const r of rects){
+        const cx = Math.max(r.x, Math.min(bird.x, r.x + r.w));
+        const cy = Math.max(r.y, Math.min(bird.y, r.y + r.h));
+        const dx = cx - bird.x; const dy = cy - bird.y;
+        if((dx*dx + dy*dy) < bird.r*bird.r) return true;
+      }
+    }
+    return false;
+  }
+
+  function drawBackground(){
+    if(bgImg.complete){
+      ctx.drawImage(bgImg, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = '#70c5ce';
+      ctx.fillRect(0,0,W,H);
+    }
+  }
+
+  function drawPipes(){
+    for(const p of pipes){
+      if(pipeTopImg.complete){
+        ctx.drawImage(pipeTopImg, p.x, p.top - pipeTopImg.height, pipeWidth, pipeTopImg.height);
+      } else {
+        ctx.fillStyle = '#2ea44f';
+        ctx.fillRect(p.x, 0, pipeWidth, p.top);
+      }
+      if(pipeBottomImg.complete){
+        ctx.drawImage(pipeBottomImg, p.x, p.top + pipeGap, pipeWidth, pipeBottomImg.height);
+      } else {
+        ctx.fillStyle = '#2ea44f';
+        ctx.fillRect(p.x, p.top + pipeGap, pipeWidth, H - (p.top + pipeGap) - 80);
+      }
+    }
+  }
+
+  function drawBird(){
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    ctx.rotate(bird.rotation);
+    const imgSize = bird.r * 3;
+    if(bird.img.complete){
+      ctx.drawImage(bird.img, -imgSize/2, -imgSize/2, imgSize, imgSize);
+    } else {
+      ctx.beginPath(); ctx.arc(0,0,bird.r,0,Math.PI*2); ctx.fillStyle='#FFDD57'; ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawScore(){
+    document.getElementById('score').textContent = score;
+    ctx.fillStyle = '#fff'; ctx.font = '42px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(score, W/2, 110);
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    drawBackground(); drawPipes(); drawBird(); drawScore();
+    if(gameOver){
+      const imgW = 280, imgH = 120;
+      const x = (W - imgW)/2, y = (H - imgH)/2;
+      if(gameOverImg.complete){
+        ctx.drawImage(gameOverImg, x, y, imgW, imgH);
+      } else {
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0, H/2 - 60, W, 140);
+        ctx.fillStyle = '#fff'; ctx.font='28px system-ui'; ctx.textAlign='center';
+        ctx.fillText('Game Over', W/2, H/2);
+      }
+      ctx.font='18px system-ui';
+      ctx.fillText('Press R or tap with two fingers to restart', W/2, H/2 + 100);
+    }
+  }
+
+  function update(){
+    frames++;
+    if(frames % 90 === 0) spawnPipe();
+    for(let i=pipes.length-1;i>=0;i--){
+      const p = pipes[i];
+      p.x -= pipeSpeed;
+      if(!p.passed && p.x + pipeWidth < bird.x){ p.passed = true; score++; }
+      if(p.x + pipeWidth < -20) pipes.splice(i,1);
+    }
+    bird.vy += gravity; bird.y += bird.vy;
+    bird.rotation = Math.max(-0.6, Math.min(1.2, bird.vy * 0.06));
+    if(!gameOver && checkCollision()) {
+      gameOver = true;
+      bgMusic.pause();
+      endSound.currentTime = 0;
+      endSound.play().catch(()=>{});
+    }
+    draw();
+    if(!gameOver) requestAnimationFrame(update);
+  }
+
+  function flap(){
+    if(gameOver) return;
+    bird.vy = bird.jumpStrength;
+  }
+
+  // 🎮 Desktop controls
+  canvas.addEventListener('click', ()=>{ if(!gameOver) flap(); });
+  window.addEventListener('keydown', (e)=>{
+    if(e.code === 'Space'){ e.preventDefault(); if(!gameOver) flap(); }
+    if(e.key === 'r' || e.key === 'R'){ if(gameOver){ reset(); requestAnimationFrame(update); } }
+  });
+
+  // 📱 Touch controls for mobile
+  let touchStartTime = 0;
+  canvas.addEventListener('touchstart', (e)=>{
+    e.preventDefault();
+    if(e.touches.length === 1 && !gameOver) {
+      flap();
+    } else if(e.touches.length === 2 && gameOver) {
+      reset(); requestAnimationFrame(update);
+    }
+  }, {passive:false});
+
+  // Autoplay policy fix: play background only after first gesture
+  window.addEventListener('click', ()=>{ bgMusic.play().catch(()=>{}); }, {once:true});
+  window.addEventListener('touchstart', ()=>{ bgMusic.play().catch(()=>{}); }, {once:true});
+
+  reset();
+  requestAnimationFrame(update);
+  </script>
+</body>
+</html>     
