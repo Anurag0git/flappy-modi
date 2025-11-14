@@ -95,10 +95,7 @@
   function drawBackground(){
     if(bgImg.complete){
       ctx.drawImage(bgImg, 0, 0, W, H);
-    } else {
-      ctx.fillStyle = '#70c5ce';
-      ctx.fillRect(0,0,W,H);
-    }
+    } 
   }
 
   function drawPipes(){
@@ -111,10 +108,7 @@
       }
       if(pipeBottomImg.complete){
         ctx.drawImage(pipeBottomImg, p.x, p.top + pipeGap, pipeWidth, pipeBottomImg.height);
-      } else {
-        ctx.fillStyle = '#2ea44f';
-        ctx.fillRect(p.x, p.top + pipeGap, pipeWidth, H - (p.top + pipeGap) - 80);
-      }
+      } 
     }
   }
 
@@ -125,9 +119,7 @@
     const imgSize = bird.r * 3;
     if(bird.img.complete){
       ctx.drawImage(bird.img, -imgSize/2, -imgSize/2, imgSize, imgSize);
-    } else {
-      ctx.beginPath(); ctx.arc(0,0,bird.r,0,Math.PI*2); ctx.fillStyle='#FFDD57'; ctx.fill();
-    }
+    } 
     ctx.restore();
   }
 
@@ -145,12 +137,7 @@
       const x = (W - imgW)/2, y = (H - imgH)/2;
       if(gameOverImg.complete){
         ctx.drawImage(gameOverImg, x, y, imgW, imgH);
-      } else {
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(0, H/2 - 60, W, 140);
-        ctx.fillStyle = '#fff'; ctx.font='28px system-ui'; ctx.textAlign='center';
-        ctx.fillText('Game Over', W/2, H/2);
-      }
+      } 
       ctx.font='18px system-ui';
       ctx.fillText('Press R or tap with two fingers to restart', W/2, H/2 + 120);
     }
